@@ -296,22 +296,22 @@ describe('ol.renderer.canvas.VectorLayer', function() {
       expect(renderer.replayGroupChanged).to.be(false);
     });
 
-    it('dispatches a postrender event when rendering', function(done) {
+    it('dispatches a render event when rendering to own context', function(done) {
       const layer = renderer.getLayer();
       layer.getSource().addFeature(new Feature(new Point([0, 0])));
-      layer.once('postrender', function() {
+      layer.once('render', function() {
         expect(true);
         done();
       });
       frameState.extent = [-10000, -10000, 10000, 10000];
       frameState.size = [100, 100];
       frameState.viewState.center = [0, 0];
-      let rendered = false;
+      let composed = false;
       if (renderer.prepareFrame(frameState, {})) {
-        rendered = true;
-        renderer.renderFrame(frameState, layer.getLayerState());
+        composed = true;
+        renderer.compose(renderer.context, frameState, layer.getLayerState);
       }
-      expect(rendered).to.be(true);
+      expect(composed).to.be(true);
     });
 
   });

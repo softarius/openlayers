@@ -24,13 +24,15 @@ const map = new Map({
 });
 
 document.getElementById('export-png').addEventListener('click', function() {
-  map.once('rendercomplete', function() {
-    domtoimage.toPng(map.getViewport().querySelector('.ol-layers'))
-      .then(function(dataURL) {
-        const link = document.getElementById('image-download');
-        link.href = dataURL;
-        link.click();
+  map.once('rendercomplete', function(event) {
+    const canvas = event.context.canvas;
+    if (navigator.msSaveBlob) {
+      navigator.msSaveBlob(canvas.msToBlob(), 'map.png');
+    } else {
+      canvas.toBlob(function(blob) {
+        saveAs(blob, 'map.png');
       });
+    }
   });
   map.renderSync();
 });

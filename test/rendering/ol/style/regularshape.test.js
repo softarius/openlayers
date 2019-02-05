@@ -15,17 +15,15 @@ describe('ol.rendering.style.RegularShape', function() {
   let map, vectorSource;
 
   function createMap(renderer) {
-    const MapConstructor = Map;
-    const LayerConstructor = VectorLayer;
-
     vectorSource = new VectorSource();
-    const vectorLayer = new LayerConstructor({
+    const vectorLayer = new VectorLayer({
       source: vectorSource
     });
 
-    map = new MapConstructor({
+    map = new Map({
       pixelRatio: 1,
       target: createMapDiv(50, 50),
+      renderer: renderer,
       layers: [vectorLayer],
       view: new View({
         projection: 'EPSG:4326',
@@ -135,6 +133,13 @@ describe('ol.rendering.style.RegularShape', function() {
       }));
       expectResemble(map, 'rendering/ol/style/expected/regularshape-canvas-linedashoffset.png', 5, done);
     });
+
+    where('WebGL').it('tests the WebGL renderer', function(done) {
+      assertWebGL();
+      createMap('webgl');
+      createFeatures(stroke, fill);
+      expectResemble(map, 'rendering/ol/style/expected/regularshape-webgl.png', 8.2, done);
+    });
   });
 
   describe('uses the default fill and stroke color', function() {
@@ -145,6 +150,13 @@ describe('ol.rendering.style.RegularShape', function() {
       createMap('canvas');
       createFeatures(stroke, fill);
       expectResemble(map, 'rendering/ol/style/expected/regularshape-canvas-default-style.png', 3.0, done);
+    });
+
+    where('WebGL').it('tests the WebGL renderer', function(done) {
+      assertWebGL();
+      createMap('webgl');
+      createFeatures(stroke, fill);
+      expectResemble(map, 'rendering/ol/style/expected/regularshape-webgl-default-style.png', 3.0, done);
     });
   });
 });

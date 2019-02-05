@@ -6,7 +6,7 @@ import Tile from './Tile.js';
 import TileState from './TileState.js';
 import {createCanvasContext2D} from './dom.js';
 import {listen, unlistenByKey} from './events.js';
-import {containsExtent, getHeight, getIntersection, getWidth} from './extent.js';
+import {getHeight, getIntersection, getWidth} from './extent.js';
 import EventType from './events/EventType.js';
 import {loadFeaturesXhr} from './featureloader.js';
 import {VOID} from './functions.js';
@@ -103,17 +103,11 @@ class VectorImageTile extends Tile {
      */
     this.sourceTileListenerKeys_ = [];
 
-    /**
-     * Use only source tiles that are loaded already
-     * @type {boolean}
-     */
-    this.useLoadedOnly = zoom != tileCoord[0];
-
     if (urlTileCoord) {
       const extent = this.extent = tileGrid.getTileCoordExtent(urlTileCoord);
       const resolution = tileGrid.getResolution(zoom);
       const sourceZ = sourceTileGrid.getZForResolution(resolution);
-      const useLoadedOnly = this.useLoadedOnly;
+      const useLoadedOnly = zoom != tileCoord[0];
       let loadCount = 0;
       sourceTileGrid.forEachTileCoord(extent, sourceZ, function(sourceTileCoord) {
         let sharedExtent = getIntersection(extent,
@@ -148,44 +142,26 @@ class VectorImageTile extends Tile {
         this.finishLoading_();
       }
 
-      this.createInterimTile_ = function() {
-        if (this.getState() !== TileState.LOADED && !useLoadedOnly) {
-          let bestZoom = -1;
-          for (const key in sourceTiles) {
-            const sourceTile = sourceTiles[key];
-            if (sourceTile.getState() === TileState.LOADED) {
-              const sourceTileCoord = sourceTile.tileCoord;
-              const sourceTileExtent = sourceTileGrid.getTileCoordExtent(sourceTileCoord);
-              if (containsExtent(sourceTileExtent, extent) && sourceTileCoord[0] > bestZoom) {
-                bestZoom = sourceTileCoord[0];
-              }
-            }
-          }
-          if (bestZoom !== -1) {
-            const tile = new VectorImageTile(tileCoord, state, sourceRevision,
-              format, tileLoadFunction, urlTileCoord, tileUrlFunction,
-              sourceTileGrid, tileGrid, sourceTiles, pixelRatio, projection,
-              tileClass, VOID, bestZoom);
+      if (zoom <= tileCoord[0] && this.state != TileState.LOADED) {
+        while (zoom > tileGrid.getMinZoom()) {
+          const tile = new VectorImageTile(tileCoord, state, sourceRevision,
+            format, tileLoadFunction, urlTileCoord, tileUrlFunction,
+            sourceTileGrid, tileGrid, sourceTiles, pixelRatio, projection,
+            tileClass, VOID, --zoom);
+          if (tile.state == TileState.LOADED) {
             this.interimTile = tile;
+            break;
           }
         }
-      };
+      }
     }
 
-  }
-
-  getInterimTile() {
-    if (!this.interimTile) {
-      this.createInterimTile_();
-    }
-    return super.getInterimTile();
   }
 
   /**
    * @inheritDoc
    */
   disposeInternal() {
-    delete this.createInterimTile_;
     this.state = TileState.ABORT;
     this.changed();
     if (this.interimTile) {
@@ -330,7 +306,6 @@ class VectorImageTile extends Tile {
     if (loaded == this.tileKeys.length) {
       this.loadListenerKeys_.forEach(unlistenByKey);
       this.loadListenerKeys_.length = 0;
-      this.sourceTilesLoaded = true;
       this.setState(TileState.LOADED);
     } else {
       this.setState(empty == this.tileKeys.length ? TileState.EMPTY : TileState.ERROR);

@@ -1,4 +1,4 @@
-import WebGLArrayBuffer from '../../../../src/ol/webgl/Buffer';
+import _ol_webgl_Buffer_ from '../../../../src/ol/webgl/Buffer.js';
 
 
 describe('ol.webgl.Buffer', function() {
@@ -9,7 +9,7 @@ describe('ol.webgl.Buffer', function() {
 
       let b;
       beforeEach(function() {
-        b = new WebGLArrayBuffer();
+        b = new _ol_webgl_Buffer_();
       });
 
       it('constructs an empty instance', function() {
@@ -22,7 +22,7 @@ describe('ol.webgl.Buffer', function() {
 
       let b;
       beforeEach(function() {
-        b = new WebGLArrayBuffer([0, 1, 2, 3]);
+        b = new _ol_webgl_Buffer_([0, 1, 2, 3]);
       });
 
       it('constructs a populated instance', function() {
@@ -37,7 +37,7 @@ describe('ol.webgl.Buffer', function() {
 
     let b;
     beforeEach(function() {
-      b = new WebGLArrayBuffer();
+      b = new _ol_webgl_Buffer_();
     });
 
     describe('getArray', function() {

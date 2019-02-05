@@ -5,7 +5,6 @@ import {LineString, Point} from '../src/ol/geom.js';
 import VectorLayer from '../src/ol/layer/Vector.js';
 import VectorSource from '../src/ol/source/Vector.js';
 import {Circle as CircleStyle, Fill, Stroke, Style} from '../src/ol/style.js';
-import {getVectorContext} from '../src/ol/render.js';
 
 
 const count = 20000;
@@ -105,8 +104,8 @@ const style = new Style({
   })
 });
 
-vector.on('postrender', function(evt) {
-  const vectorContext = getVectorContext(evt);
+map.on('postcompose', function(evt) {
+  const vectorContext = evt.vectorContext;
   vectorContext.setStyle(style);
   if (point !== null) {
     vectorContext.drawGeometry(point);

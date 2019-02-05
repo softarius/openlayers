@@ -27,10 +27,11 @@ where('Uint8ClampedArray').describe('ol.rendering.source.Raster', function() {
   }
 
   let map;
-  function createMap(pixelRatio) {
+  function createMap(renderer, pixelRatio) {
     map = new Map({
       target: createMapDiv(200, 200),
       pixelRatio: pixelRatio,
+      renderer: renderer,
       view: new View({
         center: [0, 0],
         zoom: 0
@@ -47,7 +48,7 @@ where('Uint8ClampedArray').describe('ol.rendering.source.Raster', function() {
 
   describe('raster source rendering', function() {
     it('renders the result of an operation', function(done) {
-      createMap(1);
+      createMap('canvas', 1);
 
       const source = new XYZ({
         url: 'rendering/ol/data/tiles/osm/{z}/{x}/{y}.png',

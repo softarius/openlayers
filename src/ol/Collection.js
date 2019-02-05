@@ -26,9 +26,8 @@ export class CollectionEvent extends Event {
   /**
    * @param {CollectionEventType} type Type.
    * @param {*=} opt_element Element.
-   * @param {number} opt_index The index of the added or removed element.
    */
-  constructor(type, opt_element, opt_index) {
+  constructor(type, opt_element) {
     super(type);
 
     /**
@@ -38,12 +37,6 @@ export class CollectionEvent extends Event {
      */
     this.element = opt_element;
 
-    /**
-     * The index of the added or removed element.
-     * @type {number}
-     * @api
-     */
-    this.index = opt_index;
   }
 
 }
@@ -185,7 +178,7 @@ class Collection extends BaseObject {
     this.array_.splice(index, 0, elem);
     this.updateLength_();
     this.dispatchEvent(
-      new CollectionEvent(CollectionEventType.ADD, elem, index));
+      new CollectionEvent(CollectionEventType.ADD, elem));
   }
 
   /**
@@ -240,7 +233,7 @@ class Collection extends BaseObject {
     const prev = this.array_[index];
     this.array_.splice(index, 1);
     this.updateLength_();
-    this.dispatchEvent(new CollectionEvent(CollectionEventType.REMOVE, prev, index));
+    this.dispatchEvent(new CollectionEvent(CollectionEventType.REMOVE, prev));
     return prev;
   }
 
@@ -259,9 +252,9 @@ class Collection extends BaseObject {
       const prev = this.array_[index];
       this.array_[index] = elem;
       this.dispatchEvent(
-        new CollectionEvent(CollectionEventType.REMOVE, prev, index));
+        new CollectionEvent(CollectionEventType.REMOVE, prev));
       this.dispatchEvent(
-        new CollectionEvent(CollectionEventType.ADD, elem, index));
+        new CollectionEvent(CollectionEventType.ADD, elem));
     } else {
       for (let j = n; j < index; ++j) {
         this.insertAt(j, undefined);

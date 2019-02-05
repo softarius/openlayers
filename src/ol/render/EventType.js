@@ -6,41 +6,21 @@
  * @enum {string}
  */
 export default {
-
   /**
-   * Triggered before a layer is rendered.
-   * @event module:ol/render/Event~RenderEvent#prerender
+   * @event module:ol/render/Event~RenderEvent#postcompose
    * @api
    */
-  PRERENDER: 'prerender',
-
+  POSTCOMPOSE: 'postcompose',
+  /**
+   * @event module:ol/render/Event~RenderEvent#precompose
+   * @api
+   */
+  PRECOMPOSE: 'precompose',
   /**
    * @event module:ol/render/Event~RenderEvent#render
    * @api
    */
   RENDER: 'render',
-
-  /**
-   * Triggered after a layer is rendered.
-   * @event module:ol/render/Event~RenderEvent#postrender
-   * @api
-   */
-  POSTRENDER: 'postrender',
-
-  /**
-   * Triggered before layers are rendered.
-   * @event module:ol/render/Event~RenderEvent#precompose
-   * @api
-   */
-  PRECOMPOSE: 'precompose',
-
-  /**
-   * Triggered after all layers are rendered.
-   * @event module:ol/render/Event~RenderEvent#postcompose
-   * @api
-   */
-  POSTCOMPOSE: 'postcompose',
-
   /**
    * Triggered when rendering is complete, i.e. all sources and tiles have
    * finished loading for the current viewport, and all tiles are faded in.
@@ -48,5 +28,4 @@ export default {
    * @api
    */
   RENDERCOMPLETE: 'rendercomplete'
-
 };

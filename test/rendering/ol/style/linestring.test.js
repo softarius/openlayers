@@ -13,17 +13,15 @@ describe('ol.rendering.style.LineString', function() {
   let map, vectorSource;
 
   function createMap(renderer, opt_pixelRatio) {
-    const MapConstructor = Map;
-    const LayerConstructor = VectorLayer;
-
     vectorSource = new VectorSource();
-    const vectorLayer = new LayerConstructor({
+    const vectorLayer = new VectorLayer({
       source: vectorSource
     });
 
-    map = new MapConstructor({
+    map = new Map({
       pixelRatio: opt_pixelRatio || 1,
       target: createMapDiv(50, 50),
+      renderer: renderer,
       layers: [vectorLayer],
       view: new View({
         projection: 'EPSG:4326',
@@ -117,6 +115,13 @@ describe('ol.rendering.style.LineString', function() {
       expectResemble(
         map, 'rendering/ol/style/expected/linestring-strokes-canvas.png',
         3.0, done);
+    });
+    where('WebGL').it('tests the WebGL renderer', function(done) {
+      assertWebGL();
+      createMap('webgl');
+      createFeatures();
+      expectResemble(map, 'rendering/ol/style/expected/linestring-strokes-webgl.png',
+        14.6, done);
     });
 
     it('tests the canvas renderer (HiDPI)', function(done) {

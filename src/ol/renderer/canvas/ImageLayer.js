@@ -2,30 +2,74 @@
  * @module ol/renderer/canvas/ImageLayer
  */
 import {ENABLE_RASTER_REPROJECTION} from '../../reproj/common.js';
+import ImageCanvas from '../../ImageCanvas.js';
+import LayerType from '../../LayerType.js';
 import ViewHint from '../../ViewHint.js';
-import {containsExtent, intersects} from '../../extent.js';
-import {getIntersection, isEmpty} from '../../extent.js';
-import CanvasLayerRenderer from './Layer.js';
-import {compose as composeTransform, makeInverse, toString as transformToString} from '../../transform.js';
+import {equals} from '../../array.js';
+import {getHeight, getIntersection, getWidth, isEmpty} from '../../extent.js';
+import VectorRenderType from '../../layer/VectorRenderType.js';
+import {assign} from '../../obj.js';
+import {layerRendererConstructors} from './Map.js';
+import IntermediateCanvasRenderer from './IntermediateCanvas.js';
+import {create as createTransform, compose as composeTransform} from '../../transform.js';
 
 /**
  * @classdesc
  * Canvas renderer for image layers.
  * @api
  */
-class CanvasImageLayerRenderer extends CanvasLayerRenderer {
+class CanvasImageLayerRenderer extends IntermediateCanvasRenderer {
 
   /**
-   * @param {import("../../layer/Image.js").default} imageLayer Image layer.
+   * @param {import("../../layer/Image.js").default|import("../../layer/Vector.js").default} imageLayer Image or vector layer.
    */
   constructor(imageLayer) {
+
     super(imageLayer);
 
     /**
-     * @protected
+     * @private
      * @type {?import("../../ImageBase.js").default}
      */
     this.image_ = null;
+
+    /**
+     * @private
+     * @type {import("../../transform.js").Transform}
+     */
+    this.imageTransform_ = createTransform();
+
+    /**
+     * @type {!Array<string>}
+     */
+    this.skippedFeatures_ = [];
+
+    /**
+     * @private
+     * @type {import("./VectorLayer.js").default}
+     */
+    this.vectorRenderer_ = null;
+
+    if (imageLayer.getType() === LayerType.VECTOR) {
+      for (let i = 0, ii = layerRendererConstructors.length; i < ii; ++i) {
+        const ctor = layerRendererConstructors[i];
+        if (ctor !== CanvasImageLayerRenderer && ctor['handles'](imageLayer)) {
+          this.vectorRenderer_ = /** @type {import("./VectorLayer.js").default} */ (new ctor(imageLayer));
+          break;
+        }
+      }
+    }
+
+  }
+
+  /**
+   * @inheritDoc
+   */
+  disposeInternal() {
+    if (this.vectorRenderer_) {
+      this.vectorRenderer_.dispose();
+    }
+    super.disposeInternal();
   }
 
   /**
@@ -38,22 +82,35 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
   /**
    * @inheritDoc
    */
+  getImageTransform() {
+    return this.imageTransform_;
+  }
+
+  /**
+   * @inheritDoc
+   */
   prepareFrame(frameState, layerState) {
+
     const pixelRatio = frameState.pixelRatio;
+    const size = frameState.size;
     const viewState = frameState.viewState;
+    const viewCenter = viewState.center;
     const viewResolution = viewState.resolution;
 
+    let image;
     const imageLayer = /** @type {import("../../layer/Image.js").default} */ (this.getLayer());
     const imageSource = /** @type {import("../../source/Image.js").default} */ (imageLayer.getSource());
 
     const hints = frameState.viewHints;
 
+    const vectorRenderer = this.vectorRenderer_;
     let renderedExtent = frameState.extent;
-    if (layerState.extent !== undefined) {
+    if (!vectorRenderer && layerState.extent !== undefined) {
       renderedExtent = getIntersection(renderedExtent, layerState.extent);
     }
 
-    if (!hints[ViewHint.ANIMATING] && !hints[ViewHint.INTERACTING] && !isEmpty(renderedExtent)) {
+    if (!hints[ViewHint.ANIMATING] && !hints[ViewHint.INTERACTING] &&
+        !isEmpty(renderedExtent)) {
       let projection = viewState.projection;
       if (!ENABLE_RASTER_REPROJECTION) {
         const sourceProjection = imageSource.getProjection();
@@ -61,10 +118,60 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
           projection = sourceProjection;
         }
       }
-      const image = imageSource.getImage(renderedExtent, viewResolution, pixelRatio, projection);
+      let skippedFeatures = this.skippedFeatures_;
+      if (vectorRenderer) {
+        const context = vectorRenderer.context;
+        const imageFrameState = /** @type {import("../../PluggableMap.js").FrameState} */ (assign({}, frameState, {
+          size: [
+            getWidth(renderedExtent) / viewResolution,
+            getHeight(renderedExtent) / viewResolution
+          ],
+          viewState: /** @type {import("../../View.js").State} */ (assign({}, frameState.viewState, {
+            rotation: 0
+          }))
+        }));
+        const newSkippedFeatures = Object.keys(imageFrameState.skippedFeatureUids).sort();
+        image = new ImageCanvas(renderedExtent, viewResolution, pixelRatio, context.canvas, function(callback) {
+          if (vectorRenderer.prepareFrame(imageFrameState, layerState) &&
+              (vectorRenderer.replayGroupChanged ||
+              !equals(skippedFeatures, newSkippedFeatures))) {
+            context.canvas.width = imageFrameState.size[0] * pixelRatio;
+            context.canvas.height = imageFrameState.size[1] * pixelRatio;
+            vectorRenderer.compose(context, imageFrameState, layerState);
+            skippedFeatures = newSkippedFeatures;
+            callback();
+          }
+        });
+      } else {
+        image = imageSource.getImage(
+          renderedExtent, viewResolution, pixelRatio, projection);
+      }
       if (image && this.loadImage(image)) {
         this.image_ = image;
+        this.skippedFeatures_ = skippedFeatures;
       }
+    }
+
+    if (this.image_) {
+      image = this.image_;
+      const imageExtent = image.getExtent();
+      const imageResolution = image.getResolution();
+      const imagePixelRatio = image.getPixelRatio();
+      const scale = pixelRatio * imageResolution /
+          (viewResolution * imagePixelRatio);
+      const transform = composeTransform(this.imageTransform_,
+        pixelRatio * size[0] / 2, pixelRatio * size[1] / 2,
+        scale, scale,
+        0,
+        imagePixelRatio * (imageExtent[0] - viewCenter[0]) / imageResolution,
+        imagePixelRatio * (viewCenter[1] - imageExtent[3]) / imageResolution);
+      composeTransform(this.coordinateToCanvasPixelTransform,
+        pixelRatio * size[0] / 2 - transform[4], pixelRatio * size[1] / 2 - transform[5],
+        pixelRatio / viewResolution, -pixelRatio / viewResolution,
+        0,
+        -viewCenter[0], -viewCenter[1]);
+
+      this.renderedResolution = imageResolution * pixelRatio / imagePixelRatio;
     }
 
     return !!this.image_;
@@ -73,94 +180,37 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
   /**
    * @inheritDoc
    */
-  renderFrame(frameState, layerState) {
-    const image = this.image_;
-    const imageExtent = image.getExtent();
-    const imageResolution = image.getResolution();
-    const imagePixelRatio = image.getPixelRatio();
-    const pixelRatio = frameState.pixelRatio;
-    const viewState = frameState.viewState;
-    const viewCenter = viewState.center;
-    const viewResolution = viewState.resolution;
-    const size = frameState.size;
-    const scale = pixelRatio * imageResolution / (viewResolution * imagePixelRatio);
-
-    let width = Math.round(size[0] * pixelRatio);
-    let height = Math.round(size[1] * pixelRatio);
-    const rotation = viewState.rotation;
-    if (rotation) {
-      const size = Math.round(Math.sqrt(width * width + height * height));
-      width = height = size;
-    }
-
-    // set forward and inverse pixel transforms
-    composeTransform(this.pixelTransform_,
-      frameState.size[0] / 2, frameState.size[1] / 2,
-      1 / pixelRatio, 1 / pixelRatio,
-      rotation,
-      -width / 2, -height / 2
-    );
-    makeInverse(this.inversePixelTransform_, this.pixelTransform_);
-
-    const context = this.context;
-    const canvas = context.canvas;
-
-    if (canvas.width != width || canvas.height != height) {
-      canvas.width = width;
-      canvas.height = height;
+  forEachFeatureAtCoordinate(coordinate, frameState, hitTolerance, callback) {
+    if (this.vectorRenderer_) {
+      return this.vectorRenderer_.forEachFeatureAtCoordinate(coordinate, frameState, hitTolerance, callback);
     } else {
-      context.clearRect(0, 0, width, height);
+      return super.forEachFeatureAtCoordinate(coordinate, frameState, hitTolerance, callback);
     }
-
-    // clipped rendering if layer extent is set
-    const extent = layerState.extent;
-    const clipped = extent !== undefined &&
-          !containsExtent(extent, frameState.extent) &&
-          intersects(extent, frameState.extent);
-    if (clipped) {
-      this.clip(context, frameState, extent);
-    }
-
-    const img = image.getImage();
-
-    const transform = composeTransform(this.tempTransform_,
-      width / 2, height / 2,
-      scale, scale,
-      0,
-      imagePixelRatio * (imageExtent[0] - viewCenter[0]) / imageResolution,
-      imagePixelRatio * (viewCenter[1] - imageExtent[3]) / imageResolution);
-
-    this.renderedResolution = imageResolution * pixelRatio / imagePixelRatio;
-
-    const dx = transform[4];
-    const dy = transform[5];
-    const dw = img.width * transform[0];
-    const dh = img.height * transform[3];
-
-    if (dw >= 0.5 && dh >= 0.5) {
-      this.context.drawImage(img, 0, 0, +img.width, +img.height,
-        Math.round(dx), Math.round(dy), Math.round(dw), Math.round(dh));
-    }
-
-    if (clipped) {
-      context.restore();
-    }
-
-    const opacity = layerState.opacity;
-    if (opacity !== canvas.style.opacity) {
-      canvas.style.opacity = opacity;
-    }
-
-    const canvasTransform = transformToString(this.pixelTransform_);
-    if (canvasTransform !== canvas.style.transform) {
-      canvas.style.transform = canvasTransform;
-    }
-
-    return canvas;
-
   }
-
 }
+
+
+/**
+ * Determine if this renderer handles the provided layer.
+ * @param {import("../../layer/Layer.js").default} layer The candidate layer.
+ * @return {boolean} The renderer can render the layer.
+ */
+CanvasImageLayerRenderer['handles'] = function(layer) {
+  return layer.getType() === LayerType.IMAGE ||
+    layer.getType() === LayerType.VECTOR &&
+    /** @type {import("../../layer/Vector.js").default} */ (layer).getRenderMode() === VectorRenderType.IMAGE;
+};
+
+
+/**
+ * Create a layer renderer.
+ * @param {import("../Map.js").default} mapRenderer The map renderer.
+ * @param {import("../../layer/Layer.js").default} layer The layer to be rendererd.
+ * @return {CanvasImageLayerRenderer} The layer renderer.
+ */
+CanvasImageLayerRenderer['create'] = function(mapRenderer, layer) {
+  return new CanvasImageLayerRenderer(/** @type {import("../../layer/Image.js").default} */ (layer));
+};
 
 
 export default CanvasImageLayerRenderer;

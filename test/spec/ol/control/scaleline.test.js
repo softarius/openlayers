@@ -8,7 +8,6 @@ describe('ol.control.ScaleLine', function() {
   let map;
   beforeEach(function() {
     const target = document.createElement('div');
-    target.style.height = '256px';
     document.body.appendChild(target);
     map = new Map({
       target: target

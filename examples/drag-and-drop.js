@@ -1,9 +1,9 @@
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
-import {GPX, GeoJSON, IGC, KML, TopoJSON} from '../src/ol/format.js';
-import {defaults as defaultInteractions, DragAndDrop} from '../src/ol/interaction.js';
-import {Tile as TileLayer, Vector as VectorLayer} from '../src/ol/layer.js';
-import {BingMaps, Vector as VectorSource} from '../src/ol/source.js';
+import { GPX, GeoJSON, IGC, KML, TopoJSON } from '../src/ol/format.js';
+import { defaults as defaultInteractions, DragAndDrop, Select } from '../src/ol/interaction.js';
+import { Tile as TileLayer, Vector as VectorLayer } from '../src/ol/layer.js';
+import { BingMaps, Vector as VectorSource } from '../src/ol/source.js';
 
 const dragAndDropInteraction = new DragAndDrop({
   formatConstructors: [
@@ -16,7 +16,9 @@ const dragAndDropInteraction = new DragAndDrop({
 });
 
 const map = new Map({
-  interactions: defaultInteractions().extend([dragAndDropInteraction]),
+  interactions: defaultInteractions().extend([dragAndDropInteraction,
+    new Select()
+  ]),
   layers: [
     new TileLayer({
       source: new BingMaps({
@@ -32,7 +34,7 @@ const map = new Map({
   })
 });
 
-dragAndDropInteraction.on('addfeatures', function(event) {
+dragAndDropInteraction.on('addfeatures', function (event) {
   const vectorSource = new VectorSource({
     features: event.features
   });
@@ -42,9 +44,9 @@ dragAndDropInteraction.on('addfeatures', function(event) {
   map.getView().fit(vectorSource.getExtent());
 });
 
-const displayFeatureInfo = function(pixel) {
+const displayFeatureInfo = function (pixel) {
   const features = [];
-  map.forEachFeatureAtPixel(pixel, function(feature) {
+  map.forEachFeatureAtPixel(pixel, function (feature) {
     features.push(feature);
   });
   if (features.length > 0) {
@@ -59,7 +61,7 @@ const displayFeatureInfo = function(pixel) {
   }
 };
 
-map.on('pointermove', function(evt) {
+map.on('pointermove', function (evt) {
   if (evt.dragging) {
     return;
   }
@@ -67,6 +69,6 @@ map.on('pointermove', function(evt) {
   displayFeatureInfo(pixel);
 });
 
-map.on('click', function(evt) {
+map.on('click', function (evt) {
   displayFeatureInfo(evt.pixel);
 });

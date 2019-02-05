@@ -29,7 +29,7 @@ gn.init().then(function() {
   gn.start(function(event) {
     const center = view.getCenter();
     const resolution = view.getResolution();
-    const alpha = toRadians(event.do.alpha);
+    const alpha = toRadians(event.do.beta);
     const beta = toRadians(event.do.beta);
     const gamma = toRadians(event.do.gamma);
 

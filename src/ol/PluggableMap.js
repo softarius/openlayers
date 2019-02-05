@@ -19,6 +19,7 @@ import ViewHint from './ViewHint.js';
 import {assert} from './asserts.js';
 import {removeNode} from './dom.js';
 import {listen, unlistenByKey, unlisten} from './events.js';
+import {stopPropagation} from './events/Event.js';
 import EventType from './events/EventType.js';
 import {createEmpty, clone, createOrUpdateEmpty, equals, getForViewAndSize, isEmpty} from './extent.js';
 import {TRUE} from './functions.js';
@@ -67,7 +68,8 @@ import {create as createTransform, apply as applyTransform} from './transform.js
  * Only layers which are visible and for which this function returns `true`
  * will be tested for features. By default, all visible layers will be tested.
  * @property {number} [hitTolerance=0] Hit-detection tolerance in pixels. Pixels
- * inside the radius around the given position will be checked for features.
+ * inside the radius around the given position will be checked for features. This only
+ * works for the canvas renderer and not for WebGL.
  */
 
 
@@ -188,7 +190,7 @@ class PluggableMap extends BaseObject {
      */
     this.animationDelay_ = function() {
       this.animationDelayKey_ = undefined;
-      this.renderFrame_(Date.now());
+      this.renderFrame_.call(this, Date.now());
     }.bind(this);
 
     /**
@@ -259,10 +261,6 @@ class PluggableMap extends BaseObject {
      * @type {!HTMLElement}
      */
     this.overlayContainer_ = document.createElement('div');
-    this.overlayContainer_.style.position = 'absolute';
-    this.overlayContainer_.style.zIndex = '0';
-    this.overlayContainer_.style.width = '100%';
-    this.overlayContainer_.style.height = '100%';
     this.overlayContainer_.className = 'ol-overlaycontainer';
     this.viewport_.appendChild(this.overlayContainer_);
 
@@ -271,11 +269,20 @@ class PluggableMap extends BaseObject {
      * @type {!HTMLElement}
      */
     this.overlayContainerStopEvent_ = document.createElement('div');
-    this.overlayContainerStopEvent_.style.position = 'absolute';
-    this.overlayContainerStopEvent_.style.zIndex = '0';
-    this.overlayContainerStopEvent_.style.width = '100%';
-    this.overlayContainerStopEvent_.style.height = '100%';
     this.overlayContainerStopEvent_.className = 'ol-overlaycontainer-stopevent';
+    const overlayEvents = [
+      EventType.CLICK,
+      EventType.DBLCLICK,
+      EventType.MOUSEDOWN,
+      EventType.TOUCHSTART,
+      EventType.MSPOINTERDOWN,
+      MapBrowserEventType.POINTERDOWN,
+      EventType.MOUSEWHEEL,
+      EventType.WHEEL
+    ];
+    for (let i = 0, ii = overlayEvents.length; i < ii; ++i) {
+      listen(this.overlayContainerStopEvent_, overlayEvents[i], stopPropagation);
+    }
     this.viewport_.appendChild(this.overlayContainerStopEvent_);
 
     /**
@@ -617,7 +624,8 @@ class PluggableMap extends BaseObject {
     const hitTolerance = options.hitTolerance !== undefined ?
       opt_options.hitTolerance * this.frameState_.pixelRatio : 0;
     const layerFilter = options.layerFilter || TRUE;
-    return this.renderer_.forEachLayerAtPixel(pixel, this.frameState_, hitTolerance, callback, layerFilter);
+    return this.renderer_.forEachLayerAtPixel(
+      pixel, this.frameState_, hitTolerance, callback, null, layerFilter, null);
   }
 
   /**
@@ -910,13 +918,6 @@ class PluggableMap extends BaseObject {
       // With no view defined, we cannot translate pixels into geographical
       // coordinates so interactions cannot be used.
       return;
-    }
-    let target = mapBrowserEvent.originalEvent.target;
-    while (target instanceof HTMLElement) {
-      if (target.parentElement === this.overlayContainerStopEvent_) {
-        return;
-      }
-      target = target.parentElement;
     }
     this.focus_ = mapBrowserEvent.coordinate;
     mapBrowserEvent.frameState = this.frameState_;

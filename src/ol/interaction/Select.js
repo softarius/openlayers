@@ -91,7 +91,8 @@ const SelectEventType = {
  * @property {boolean} [wrapX=true] Wrap the world horizontally on the selection
  * overlay.
  * @property {number} [hitTolerance=0] Hit-detection tolerance. Pixels inside
- * the radius around the given position will be checked for features.
+ * the radius around the given position will be checked for features. This only
+ * works for the canvas renderer and not for WebGL.
  */
 
 
@@ -313,7 +314,8 @@ class Select extends Interaction {
 
   /**
    * Hit-detection tolerance. Pixels inside the radius around the given position
-   * will be checked for features.
+   * will be checked for features. This only works for the canvas renderer and
+   * not for WebGL.
    * @param {number} hitTolerance Hit tolerance in pixels.
    * @api
    */

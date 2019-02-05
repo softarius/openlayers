@@ -18,18 +18,16 @@ describe('ol.rendering.style.Text', function() {
   let map, vectorSource;
 
   function createMap(renderer, opt_pixelRatio) {
-    const MapConstructor = Map;
-    const LayerConstructor = VectorLayer;
-
     const pixelRatio = opt_pixelRatio || 1;
     vectorSource = new VectorSource();
-    const vectorLayer = new LayerConstructor({
+    const vectorLayer = new VectorLayer({
       source: vectorSource
     });
 
-    map = new MapConstructor({
+    map = new Map({
       pixelRatio: pixelRatio,
       target: createMapDiv(200 / pixelRatio, 200 / pixelRatio),
+      renderer: renderer,
       layers: [vectorLayer],
       view: new View({
         projection: 'EPSG:4326',
@@ -442,6 +440,19 @@ describe('ol.rendering.style.Text', function() {
         expectResemble(map, 'rendering/ol/style/expected/text-linestring-left-nice-rotated.png', 4.5, done);
       });
 
+    });
+
+    where('WebGL').it('tests the webgl renderer without rotation', function(done) {
+      createMap('webgl');
+      createFeatures();
+      expectResemble(map, 'rendering/ol/style/expected/text-webgl.png', 1.8, done);
+    });
+
+    where('WebGL').it('tests the webgl renderer with rotation', function(done) {
+      createMap('webgl');
+      createFeatures();
+      map.getView().setRotation(Math.PI / 7);
+      expectResemble(map, 'rendering/ol/style/expected/text-rotated-webgl.png', 1.8, done);
     });
 
   });

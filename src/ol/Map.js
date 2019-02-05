@@ -5,7 +5,11 @@ import PluggableMap from './PluggableMap.js';
 import {defaults as defaultControls} from './control/util.js';
 import {defaults as defaultInteractions} from './interaction.js';
 import {assign} from './obj.js';
-import CompositeMapRenderer from './renderer/Composite.js';
+import CanvasImageLayerRenderer from './renderer/canvas/ImageLayer.js';
+import CanvasMapRenderer from './renderer/canvas/Map.js';
+import CanvasTileLayerRenderer from './renderer/canvas/TileLayer.js';
+import CanvasVectorLayerRenderer from './renderer/canvas/VectorLayer.js';
+import CanvasVectorTileLayerRenderer from './renderer/canvas/VectorTileLayer.js';
 
 /**
  * @classdesc
@@ -76,7 +80,14 @@ class Map extends PluggableMap {
   }
 
   createRenderer() {
-    return new CompositeMapRenderer(this);
+    const renderer = new CanvasMapRenderer(this);
+    renderer.registerLayerRenderers([
+      CanvasImageLayerRenderer,
+      CanvasTileLayerRenderer,
+      CanvasVectorLayerRenderer,
+      CanvasVectorTileLayerRenderer
+    ]);
+    return renderer;
   }
 }
 

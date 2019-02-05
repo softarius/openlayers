@@ -46,7 +46,8 @@ const TranslateEventType = {
  * `true` for layers that you want to be translatable. If the option is
  * absent, all visible layers will be considered translatable.
  * @property {number} [hitTolerance=0] Hit-detection tolerance. Pixels inside the radius around the given position
- * will be checked for features.
+ * will be checked for features. This only works for the canvas renderer and
+ * not for WebGL.
  */
 
 
@@ -266,7 +267,8 @@ class Translate extends PointerInteraction {
 
   /**
    * Hit-detection tolerance. Pixels inside the radius around the given position
-   * will be checked for features.
+   * will be checked for features. This only works for the canvas renderer and
+   * not for WebGL.
    * @param {number} hitTolerance Hit tolerance in pixels.
    * @api
    */

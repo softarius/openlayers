@@ -52,7 +52,7 @@ container.addEventListener('mouseout', function() {
 });
 
 // before rendering the layer, do some clipping
-imagery.on('prerender', function(event) {
+imagery.on('precompose', function(event) {
   const ctx = event.context;
   const pixelRatio = event.frameState.pixelRatio;
   ctx.save();
@@ -69,7 +69,7 @@ imagery.on('prerender', function(event) {
 });
 
 // after rendering the layer, restore the canvas context
-imagery.on('postrender', function(event) {
+imagery.on('postcompose', function(event) {
   const ctx = event.context;
   ctx.restore();
 });

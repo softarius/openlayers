@@ -92,12 +92,6 @@ class Layer extends BaseLayer {
      */
     this.sourceChangeKey_ = null;
 
-    /**
-     * @private
-     * @type {import("../renderer/Layer.js").default}
-     */
-    this.renderer_ = null;
-
     if (options.map) {
       this.setMap(options.map);
     }
@@ -173,20 +167,6 @@ class Layer extends BaseLayer {
   }
 
   /**
-   * In charge to manage the rendering of the layer. One layer type is
-   * bounded with one layer renderer.
-   * @param {?import("../PluggableMap.js").FrameState} frameState Frame state.
-   * @return {HTMLElement} The rendered element.
-   */
-  render(frameState) {
-    const layerRenderer = this.getRenderer();
-    const layerState = this.getLayerState();
-    if (layerRenderer.prepareFrame(frameState, layerState)) {
-      return layerRenderer.renderFrame(frameState, layerState);
-    }
-  }
-
-  /**
    * Sets the layer to be rendered on top of other layers on a map. The map will
    * not manage this layer in its layers collection, and the callback in
    * {@link module:ol/Map#forEachLayerAtPixel} will receive `null` as layer. This
@@ -235,27 +215,6 @@ class Layer extends BaseLayer {
   setSource(source) {
     this.set(LayerProperty.SOURCE, source);
   }
-
-  /**
-   * Get the renderer for this layer.
-   * @return {import("../renderer/Layer.js").default} The layer renderer.
-   */
-  getRenderer() {
-    if (!this.renderer_) {
-      this.renderer_ = this.createRenderer();
-    }
-    return this.renderer_;
-  }
-
-  /**
-   * Create a renderer for this layer.
-   * @return {import("../renderer/Layer.js").default} A layer renderer.
-   * @protected
-   */
-  createRenderer() {
-    return null;
-  }
-
 }
 
 

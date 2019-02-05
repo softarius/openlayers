@@ -1,4 +1,4 @@
-import {getCircleArray} from '../../../../../src/ol/render/canvas/BuilderGroup.js';
+import {getCircleArray} from '../../../../../src/ol/render/canvas/ReplayGroup.js';
 
 
 describe('ol.render.canvas.ReplayGroup', function() {

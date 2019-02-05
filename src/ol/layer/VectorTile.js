@@ -1,11 +1,11 @@
 /**
  * @module ol/layer/VectorTile
  */
+import LayerType from '../LayerType.js';
 import {assert} from '../asserts.js';
 import TileProperty from './TileProperty.js';
-import BaseVectorLayer from './BaseVector.js';
+import VectorLayer from './Vector.js';
 import VectorTileRenderType from './VectorTileRenderType.js';
-import CanvasVectorTileLayerRenderer from '../renderer/canvas/VectorTileLayer.js';
 import {assign} from '../obj.js';
 
 
@@ -78,12 +78,23 @@ import {assign} from '../obj.js';
  * @param {Options=} opt_options Options.
  * @api
  */
-class VectorTileLayer extends BaseVectorLayer {
+class VectorTileLayer extends VectorLayer {
   /**
    * @param {Options=} opt_options Options.
    */
   constructor(opt_options) {
     const options = opt_options ? opt_options : {};
+
+    let renderMode = options.renderMode || VectorTileRenderType.HYBRID;
+    assert(renderMode == undefined ||
+       renderMode == VectorTileRenderType.IMAGE ||
+       renderMode == VectorTileRenderType.HYBRID ||
+       renderMode == VectorTileRenderType.VECTOR,
+    28); // `renderMode` must be `'image'`, `'hybrid'` or `'vector'`
+    if (options.declutter && renderMode == VectorTileRenderType.IMAGE) {
+      renderMode = VectorTileRenderType.HYBRID;
+    }
+    options.renderMode = renderMode;
 
     const baseOptions = /** @type {Object} */ (assign({}, options));
     delete baseOptions.preload;
@@ -91,42 +102,17 @@ class VectorTileLayer extends BaseVectorLayer {
 
     super(/** @type {import("./Vector.js").Options} */ (baseOptions));
 
-    let renderMode = options.renderMode || VectorTileRenderType.HYBRID;
-    assert(renderMode == undefined ||
-       renderMode == VectorTileRenderType.IMAGE ||
-       renderMode == VectorTileRenderType.HYBRID,
-    28); // `renderMode` must be `'image'` or `'hybrid'`
-
-    if (options.declutter && renderMode == VectorTileRenderType.IMAGE) {
-      renderMode = VectorTileRenderType.HYBRID;
-    }
-
-    /**
-     * @private
-     * @type {VectorTileRenderType}
-     */
-    this.renderMode_ = renderMode;
-
     this.setPreload(options.preload ? options.preload : 0);
     this.setUseInterimTilesOnError(options.useInterimTilesOnError !== undefined ?
       options.useInterimTilesOnError : true);
 
-  }
+    /**
+    * The layer type.
+    * @protected
+    * @type {import("../LayerType.js").default}
+    */
+    this.type = LayerType.VECTOR_TILE;
 
-  /**
-   * Create a renderer for this layer.
-   * @return {import("../renderer/Layer.js").default} A layer renderer.
-   * @protected
-   */
-  createRenderer() {
-    return new CanvasVectorTileLayerRenderer(this);
-  }
-
-  /**
-   * @return {VectorTileRenderType} The render mode.
-   */
-  getRenderMode() {
-    return this.renderMode_;
   }
 
   /**

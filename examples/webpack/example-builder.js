@@ -152,9 +152,6 @@ ExampleBuilder.prototype.render = async function(dir, chunk) {
   // add in script tag
   const jsName = `${name}.js`;
   let jsSource = getJsSource(chunk, path.join('.', jsName));
-  if (!jsSource) {
-    throw new Error(`No .js source for ${jsName}`);
-  }
   jsSource = jsSource.replace(/'\.\.\/src\//g, '\'');
   if (data.cloak) {
     for (const entry of data.cloak) {

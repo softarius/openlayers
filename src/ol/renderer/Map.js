@@ -9,7 +9,7 @@ import {getWidth} from '../extent.js';
 import {TRUE} from '../functions.js';
 import {visibleAtResolution} from '../layer/Layer.js';
 import {shared as iconImageCache} from '../style/IconImageCache.js';
-import {compose as composeTransform, makeInverse} from '../transform.js';
+import {compose as composeTransform, invert as invertTransform, setFromArray as transformSetFromArray} from '../transform.js';
 
 /**
  * @abstract
@@ -40,6 +40,12 @@ class MapRenderer extends Disposable {
      */
     this.layerRendererListeners_ = {};
 
+    /**
+     * @private
+     * @type {Array<typeof import("./Layer.js").default>}
+     */
+    this.layerRendererConstructors_ = [];
+
   }
 
   /**
@@ -49,6 +55,14 @@ class MapRenderer extends Disposable {
    */
   dispatchRenderEvent(type, frameState) {
     abstract();
+  }
+
+  /**
+   * Register layer renderer constructors.
+   * @param {Array<typeof import("./Layer.js").default>} constructors Layer renderers.
+   */
+  registerLayerRenderers(constructors) {
+    this.layerRendererConstructors_.push.apply(this.layerRendererConstructors_, constructors);
   }
 
   /**
@@ -66,7 +80,8 @@ class MapRenderer extends Disposable {
       -viewState.rotation,
       -viewState.center[0], -viewState.center[1]);
 
-    makeInverse(pixelToCoordinateTransform, coordinateToPixelTransform);
+    invertTransform(
+      transformSetFromArray(pixelToCoordinateTransform, coordinateToPixelTransform));
   }
 
   /**
@@ -136,11 +151,11 @@ class MapRenderer extends Disposable {
     let i;
     for (i = numLayers - 1; i >= 0; --i) {
       const layerState = layerStates[i];
-      const layer = /** @type {import("../layer/Layer.js").default} */ (layerState.layer);
+      const layer = layerState.layer;
       if (visibleAtResolution(layerState, viewResolution) && layerFilter.call(thisArg2, layer)) {
         const layerRenderer = this.getLayerRenderer(layer);
-        const source = layer.getSource();
-        if (layerRenderer && source) {
+        const source = /** @type {import("../layer/Layer.js").default} */ (layer).getSource();
+        if (source) {
           result = layerRenderer.forEachFeatureAtCoordinate(
             source.getWrapX() ? translatedCoordinate : coordinate,
             frameState, hitTolerance, forEachFeatureAtCoordinate);
@@ -160,14 +175,16 @@ class MapRenderer extends Disposable {
    * @param {number} hitTolerance Hit tolerance in pixels.
    * @param {function(this: S, import("../layer/Layer.js").default, (Uint8ClampedArray|Uint8Array)): T} callback Layer
    *     callback.
+   * @param {S} thisArg Value to use as `this` when executing `callback`.
    * @param {function(this: U, import("../layer/Layer.js").default): boolean} layerFilter Layer filter
    *     function, only layers which are visible and for which this function
    *     returns `true` will be tested for features.  By default, all visible
    *     layers will be tested.
+   * @param {U} thisArg2 Value to use as `this` when executing `layerFilter`.
    * @return {T|undefined} Callback result.
    * @template S,T,U
    */
-  forEachLayerAtPixel(pixel, frameState, hitTolerance, callback, layerFilter) {
+  forEachLayerAtPixel(pixel, frameState, hitTolerance, callback, thisArg, layerFilter, thisArg2) {
     return abstract();
   }
 
@@ -191,24 +208,41 @@ class MapRenderer extends Disposable {
   }
 
   /**
-   * @param {import("../layer/Layer.js").default} layer Layer.
+   * @param {import("../layer/Base.js").default} layer Layer.
    * @protected
-   * @return {import("./Layer.js").default} Layer renderer. May return null.
+   * @return {import("./Layer.js").default} Layer renderer.
    */
   getLayerRenderer(layer) {
     const layerKey = getUid(layer);
     if (layerKey in this.layerRenderers_) {
       return this.layerRenderers_[layerKey];
+    } else {
+      let renderer;
+      for (let i = 0, ii = this.layerRendererConstructors_.length; i < ii; ++i) {
+        const candidate = this.layerRendererConstructors_[i];
+        if (candidate['handles'](layer)) {
+          renderer = candidate['create'](this, layer);
+          break;
+        }
+      }
+      if (renderer) {
+        this.layerRenderers_[layerKey] = renderer;
+        this.layerRendererListeners_[layerKey] = listen(renderer,
+          EventType.CHANGE, this.handleLayerRendererChange_, this);
+      } else {
+        throw new Error('Unable to create renderer for layer: ' + layer.getType());
+      }
+      return renderer;
     }
+  }
 
-    const renderer = layer.getRenderer();
-    if (!renderer) {
-      return null;
-    }
-
-    this.layerRenderers_[layerKey] = renderer;
-    this.layerRendererListeners_[layerKey] = listen(renderer, EventType.CHANGE, this.handleLayerRendererChange_, this);
-    return renderer;
+  /**
+   * @param {string} layerKey Layer key.
+   * @protected
+   * @return {import("./Layer.js").default} Layer renderer.
+   */
+  getLayerRendererByKey(layerKey) {
+    return this.layerRenderers_[layerKey];
   }
 
   /**

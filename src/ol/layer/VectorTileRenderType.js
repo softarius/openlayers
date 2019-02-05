@@ -17,5 +17,6 @@
  */
 export default {
   IMAGE: 'image',
-  HYBRID: 'hybrid'
+  HYBRID: 'hybrid',
+  VECTOR: 'vector'
 };

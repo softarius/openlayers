@@ -44,20 +44,18 @@ export function clear(object) {
 
 
 /**
- * Polyfill for Object.values().  Get an array of property values from an object.
- * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/values
- *
- * @param {!Object<K,V>} object The object from which to get the values.
+ * Get an array of property values from an object.
+ * @param {Object<K,V>} object The object from which to get the values.
  * @return {!Array<V>} The property values.
  * @template K,V
  */
-export const getValues = (typeof Object.values === 'function') ? Object.values : function(object) {
+export function getValues(object) {
   const values = [];
   for (const property in object) {
     values.push(object[property]);
   }
   return values;
-};
+}
 
 
 /**

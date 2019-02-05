@@ -1,7 +1,7 @@
 /**
  * @module ol/renderer/Layer
  */
-import {getUid, abstract} from '../util.js';
+import {getUid} from '../util.js';
 import ImageState from '../ImageState.js';
 import Observable from '../Observable.js';
 import TileState from '../TileState.js';
@@ -24,28 +24,6 @@ class LayerRenderer extends Observable {
      */
     this.layer_ = layer;
 
-  }
-
-  /**
-   * Determine whether render should be called.
-   * @abstract
-   * @param {import("../PluggableMap.js").FrameState} frameState Frame state.
-   * @param {import("../layer/Layer.js").State} layerState Layer state.
-   * @return {boolean} Layer is ready to be rendered.
-   */
-  prepareFrame(frameState, layerState) {
-    return abstract();
-  }
-
-  /**
-   * Render the layer.
-   * @abstract
-   * @param {import("../PluggableMap.js").FrameState} frameState Frame state.
-   * @param {import("../layer/Layer.js").State} layerState Layer state.
-   * @return {HTMLElement} The rendered element.
-   */
-  renderFrame(frameState, layerState) {
-    return abstract();
   }
 
   /**
@@ -89,19 +67,6 @@ class LayerRenderer extends Observable {
    * @template T
    */
   forEachFeatureAtCoordinate(coordinate, frameState, hitTolerance, callback) {}
-
-  /**
-   * @abstract
-   * @param {import("../pixel.js").Pixel} pixel Pixel.
-   * @param {import("../PluggableMap.js").FrameState} frameState FrameState.
-   * @param {number} hitTolerance Hit tolerance in pixels.
-   * @return {Uint8ClampedArray|Uint8Array} The result.  If there is no data at the pixel
-   *    location, null will be returned.  If there is data, but pixel values cannot be
-   *    returned, and empty array will be returned.
-   */
-  getDataAtPixel(pixel, frameState, hitTolerance) {
-    return abstract();
-  }
 
   /**
    * @return {import("../layer/Layer.js").default} Layer.
@@ -156,7 +121,7 @@ class LayerRenderer extends Observable {
   renderIfReadyAndVisible() {
     const layer = this.getLayer();
     if (layer.getVisible() && layer.getSourceState() == SourceState.READY) {
-      layer.changed();
+      this.changed();
     }
   }
 

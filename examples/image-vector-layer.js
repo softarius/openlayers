@@ -1,7 +1,6 @@
 import Map from '../src/ol/Map.js';
 import View from '../src/ol/View.js';
 import GeoJSON from '../src/ol/format/GeoJSON.js';
-import VectorImageLayer from '../src/ol/layer/VectorImage.js';
 import VectorLayer from '../src/ol/layer/Vector.js';
 import VectorSource from '../src/ol/source/Vector.js';
 import {Fill, Stroke, Style, Text} from '../src/ol/style.js';
@@ -20,7 +19,8 @@ const style = new Style({
 
 const map = new Map({
   layers: [
-    new VectorImageLayer({
+    new VectorLayer({
+      renderMode: 'image',
       source: new VectorSource({
         url: 'data/geojson/countries.geojson',
         format: new GeoJSON()

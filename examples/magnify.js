@@ -3,7 +3,6 @@ import View from '../src/ol/View.js';
 import TileLayer from '../src/ol/layer/Tile.js';
 import {fromLonLat} from '../src/ol/proj.js';
 import BingMaps from '../src/ol/source/BingMaps.js';
-import {getRenderPixel} from '../src/ol/render.js';
 
 const key = 'As1HiMj1PvLPlqc_gtM7AqZfBL8ZL3VrjaS3zIb22Uvb9WKhuJObROC-qUpa81U5';
 
@@ -49,17 +48,16 @@ container.addEventListener('mouseout', function() {
 });
 
 // after rendering the layer, show an oversampled version around the pointer
-imagery.on('postrender', function(event) {
+imagery.on('postcompose', function(event) {
   if (mousePosition) {
-    const pixel = getRenderPixel(event, mousePosition);
-    const offset = getRenderPixel(event, [mousePosition[0] + radius, mousePosition[1]]);
-    const half = Math.sqrt(Math.pow(offset[0] - pixel[0], 2) + Math.pow(offset[1] - pixel[1], 2));
     const context = event.context;
-    const centerX = pixel[0];
-    const centerY = pixel[1];
+    const pixelRatio = event.frameState.pixelRatio;
+    const half = radius * pixelRatio;
+    const centerX = mousePosition[0] * pixelRatio;
+    const centerY = mousePosition[1] * pixelRatio;
     const originX = centerX - half;
     const originY = centerY - half;
-    const size = Math.round(2 * half + 1);
+    const size = 2 * half + 1;
     const sourceData = context.getImageData(originX, originY, size, size).data;
     const dest = context.createImageData(size, size);
     const destData = dest.data;
@@ -84,7 +82,7 @@ imagery.on('postrender', function(event) {
     }
     context.beginPath();
     context.arc(centerX, centerY, half, 0, 2 * Math.PI);
-    context.lineWidth = 3 * half / radius;
+    context.lineWidth = 3 * pixelRatio;
     context.strokeStyle = 'rgba(255,255,255,0.5)';
     context.putImageData(dest, originX, originY);
     context.stroke();
