@@ -515,7 +515,9 @@ class KML extends XMLFeature {
         style, styleUrl, this.defaultStyle_, this.sharedStyles_,
         this.showPointNames_);
       feature.setStyle(styleFunction);
+      //console.log('Style = ', feature.getId(id), style);
     }
+
     delete object['Style'];
     // we do not remove the styleUrl property from the object, so it
     // gets stored on feature when setProperties is called
@@ -915,6 +917,7 @@ function createNameStyleFunction(foundStyle, name) {
  */
 function createFeatureStyleFunction(style, styleUrl, defaultStyle, sharedStyles, showPointNames) {
 
+
   return (
     /**
      * @param {Feature} feature feature.
@@ -922,6 +925,7 @@ function createFeatureStyleFunction(style, styleUrl, defaultStyle, sharedStyles,
      * @return {Array<Style>} Style.
      */
     function (feature, resolution) {
+
       let drawName = showPointNames;
       /** @type {Style|undefined} */
       let nameStyle;
@@ -943,6 +947,54 @@ function createFeatureStyleFunction(style, styleUrl, defaultStyle, sharedStyles,
           nameStyle = createNameStyleFunction(style[0], name);
           return style.concat(nameStyle);
         }
+
+        var geometry = feature.getGeometry();
+        if (geometry.getType() == 'Polygon' && style[0].getImage().getSrc() != DEFAULT_IMAGE_STYLE_SRC
+
+        ) {
+          let coordinates = geometry.getCoordinates();
+          geometry = new LineString(coordinates[0]);
+        }
+        let mpoint = geometry.getType() == 'LineString';
+
+        if (mpoint) {
+
+          var icon0 = style[0].getImage();
+          let styles = [style[0]];
+          // console.log('Автоповорот', style[0].getImage().getSrc());
+          geometry.forEachSegment(function (start, end) {
+
+            var rotation = 0;
+            if (style[0].getImage().getSrc().indexOf('rotate') != -1) { // FIXME определение необходимости поворота узла
+              //console.log('Автоповорот узла', style[0].getImage().getSrc());
+              var dx = end[0] - start[0];
+              var dy = end[1] - start[1];
+              rotation = - Math.atan2(dy, dx) + Math.PI;
+            }
+
+            // let rotate = rotation / Math.PI * 180;
+
+
+            if (icon0.getSrc() != DEFAULT_IMAGE_STYLE_SRC) {
+              // arrows 
+              let rotUrl = icon0.getSrc(); // FIXME + '&rotate=' + rotate;
+
+              styles.push(new Style({
+                geometry: new Point(end),
+                image: new Icon({
+                  src: rotUrl,
+                  anchor: [0.5, 0.5],
+                  rotateWithView: false,
+                  rotation: rotation
+                })
+              }));
+            }
+            // style[style.length - 1].getImage().setRotation();
+          });
+
+          return styles;
+        }
+
         return style;
       }
       if (styleUrl) {
@@ -1305,7 +1357,6 @@ function lineStyleParser(node, objectStack) {
     width: /** @type {number} */ ('width' in object ? object['width'] : 1)
     , lineDash: ('lineDash' in object ? object['lineDash'].toString().split(',') : [])
   });
-   console.log('DAsh=',object['lineDash'].toString().split(','));
 
   styleObject['strokeStyle'] = strokeStyle;
 }
@@ -1353,7 +1404,7 @@ function polyStyleParser(node, objectStack) {
     styleObject['outline'] = outline;
   }
   //styleObject['strokeStyle'].setLineDash([5, 8]); //TODO LineDAsh
-  console.log('Текущий стиль', styleObject);
+  // console.log('Текущий стиль', styleObject);
 }
 
 const LS_STYLE_PARSERS = makeStructureNS(
