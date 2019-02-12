@@ -86,12 +86,13 @@
  *      );
  * ```
  */
-import {assert} from '../asserts.js';
+import { assert } from '../asserts.js';
 import GeometryType from '../geom/GeometryType.js';
 import CircleStyle from './Circle.js';
 import Fill from './Fill.js';
 import Stroke from './Stroke.js';
 
+console.log('Foo style');
 
 /**
  * A function that takes an {@link module:ol/Feature} and a `{number}`
@@ -359,7 +360,7 @@ Style.prototype.setGeometry = function setGeometry (geometry) {
   if (typeof geometry === 'function') {
     this.geometryFunction_ = geometry;
   } else if (typeof geometry === 'string') {
-    this.geometryFunction_ = function(feature) {
+    this.geometryFunction_ = function (feature) {
       return (
         /** @type {import("../geom/Geometry.js").default} */ (feature.get(geometry))
       );
@@ -367,7 +368,7 @@ Style.prototype.setGeometry = function setGeometry (geometry) {
   } else if (!geometry) {
     this.geometryFunction_ = defaultGeometryFunction;
   } else if (geometry !== undefined) {
-    this.geometryFunction_ = function() {
+    this.geometryFunction_ = function () {
       return (
         /** @type {import("../geom/Geometry.js").default} */ (geometry)
       );
@@ -413,7 +414,7 @@ export function toFunction(obj) {
       var style = /** @type {Style} */ (obj);
       styles = [style];
     }
-    styleFunction = function() {
+    styleFunction = function () {
       return styles;
     };
   }
@@ -480,7 +481,7 @@ export function createEditingStyle() {
     })
   ];
   styles[GeometryType.MULTI_POLYGON] =
-      styles[GeometryType.POLYGON];
+    styles[GeometryType.POLYGON];
 
   styles[GeometryType.LINE_STRING] = [
     new Style({
@@ -497,12 +498,12 @@ export function createEditingStyle() {
     })
   ];
   styles[GeometryType.MULTI_LINE_STRING] =
-      styles[GeometryType.LINE_STRING];
+    styles[GeometryType.LINE_STRING];
 
   styles[GeometryType.CIRCLE] =
-      styles[GeometryType.POLYGON].concat(
-        styles[GeometryType.LINE_STRING]
-      );
+    styles[GeometryType.POLYGON].concat(
+      styles[GeometryType.LINE_STRING]
+    );
 
 
   styles[GeometryType.POINT] = [
@@ -521,13 +522,13 @@ export function createEditingStyle() {
     })
   ];
   styles[GeometryType.MULTI_POINT] =
-      styles[GeometryType.POINT];
+    styles[GeometryType.POINT];
 
   styles[GeometryType.GEOMETRY_COLLECTION] =
-      styles[GeometryType.POLYGON].concat(
-        styles[GeometryType.LINE_STRING],
-        styles[GeometryType.POINT]
-      );
+    styles[GeometryType.POLYGON].concat(
+      styles[GeometryType.LINE_STRING],
+      styles[GeometryType.POINT]
+    );
 
   return styles;
 }

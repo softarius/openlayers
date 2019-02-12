@@ -510,12 +510,12 @@ var KML = /*@__PURE__*/(function (XMLFeature) {
 
     if (this.extractStyles_) {
       var style = object['Style'];
+
       var styleUrl = object['styleUrl'];
       var styleFunction = createFeatureStyleFunction(
         style, styleUrl, this.defaultStyle_, this.sharedStyles_,
         this.showPointNames_);
       feature.setStyle(styleFunction);
-      //console.log('Style = ', feature.getId(id), style);
     }
 
     delete object['Style'];
@@ -957,46 +957,65 @@ function createFeatureStyleFunction(style, styleUrl, defaultStyle, sharedStyles,
           var coordinates = geometry.getCoordinates();
           geometry = new LineString(coordinates[0]);
         }
-        var mpoint = geometry.getType() == 'LineString';
 
-        if (mpoint) {
+
+        if (geometry.getType() == 'LineString') {
 
           var icon0 = style[0].getImage();
           var styles = [style[0]];
-          // console.log('Автоповорот', style[0].getImage().getSrc());
+          var rotation = 0;
+          var prevdir = 777;
+          var i = 0;
+          console.log(geometry.flatCoordinates.length);
           geometry.forEachSegment(function (start, end) {
-
-            var rotation = 0;
-            if (style[0].getImage().getSrc().indexOf('rotate') != -1) { // FIXME определение необходимости поворота узла
-              //console.log('Автоповорот узла', style[0].getImage().getSrc());
+            if (style[0].getImage().getSrc().indexOf('rotate') != -1) { // can be rotated?
               var dx = end[0] - start[0];
               var dy = end[1] - start[1];
-              rotation = - Math.atan2(dy, dx) + Math.PI;
+              var dir = Math.PI / 2 - Math.atan2(dy, dx);
+
+              if (dir < 0) { dir = dir + Math.PI * 2 }
+              if (prevdir == 777) { prevdir = dir }
+              i++;
+
+
+              rotation = (dir + prevdir) / 2 + Math.PI / 2;
+              //if (rotation < 0) { rotation = rotation + Math.PI * 2 }
+              // console.log('узел ', i, dx, dy, dir, prevdir, rotation);
             }
 
-            // let rotate = rotation / Math.PI * 180;
-
-
             if (icon0.getSrc() != DEFAULT_IMAGE_STYLE_SRC) {
-              // arrows 
-              var rotUrl = icon0.getSrc(); // FIXME + '&rotate=' + rotate;
+              // vertex arrows etc 
+              var rotUrl = icon0.getSrc();
 
               styles.push(new Style({
-                geometry: new Point(end),
+                geometry: new Point(start),
                 image: new Icon({
                   src: rotUrl,
                   anchor: [0.5, 0.5],
-                  rotateWithView: false,
+                  rotateWithView: true,
                   rotation: rotation
                 })
               }));
+              // console.log(i, geometry.flatCoordinates.length / 3);
+              if (i + 1 == geometry.flatCoordinates.length / 3) {
+                styles.push(new Style({
+                  geometry: new Point(end),
+                  image: new Icon({
+                    src: rotUrl,
+                    anchor: [0.5, 0.5],
+                    rotateWithView: true,
+                    rotation: dir + Math.PI / 2
+                  })
+                }));
+              }
+
             }
-            // style[style.length - 1].getImage().setRotation();
-          });
+            prevdir = dir;
+          }); // foreach
 
           return styles;
         }
-
+        //console.log('Возвращается стиль', style, ' типа ', typeof style);
         return style;
       }
       if (styleUrl) {
