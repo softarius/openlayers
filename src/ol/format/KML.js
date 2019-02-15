@@ -2,12 +2,12 @@
  * @module ol/format/KML
  */
 import Feature from '../Feature.js';
-import {extend, includes} from '../array.js';
-import {assert} from '../asserts.js';
-import {asArray} from '../color.js';
-import {transformGeometryWithOptions} from './Feature.js';
+import { extend, includes } from '../array.js';
+import { assert } from '../asserts.js';
+import { asArray } from '../color.js';
+import { transformGeometryWithOptions } from './Feature.js';
 import XMLFeature from './XMLFeature.js';
-import {readDecimal, readBoolean, readString, writeStringTextNode, writeCDATASection, writeDecimalTextNode, writeBooleanTextNode} from './xsd.js';
+import { readDecimal, readBoolean, readString, writeStringTextNode, writeCDATASection, writeDecimalTextNode, writeBooleanTextNode } from './xsd.js';
 import GeometryCollection from '../geom/GeometryCollection.js';
 import GeometryLayout from '../geom/GeometryLayout.js';
 import GeometryType from '../geom/GeometryType.js';
@@ -17,8 +17,8 @@ import MultiPoint from '../geom/MultiPoint.js';
 import MultiPolygon from '../geom/MultiPolygon.js';
 import Point from '../geom/Point.js';
 import Polygon from '../geom/Polygon.js';
-import {toRadians} from '../math.js';
-import {get as getProjection} from '../proj.js';
+import { toRadians } from '../math.js';
+import { get as getProjection } from '../proj.js';
 import Fill from '../style/Fill.js';
 import Icon from '../style/Icon.js';
 import IconAnchorUnits from '../style/IconAnchorUnits.js';
@@ -26,11 +26,13 @@ import IconOrigin from '../style/IconOrigin.js';
 import Stroke from '../style/Stroke.js';
 import Style from '../style/Style.js';
 import Text from '../style/Text.js';
-import {createElementNS, getAllTextContent, isDocument, makeArrayExtender,
+import {
+  createElementNS, getAllTextContent, isDocument, makeArrayExtender,
   makeArrayPusher, makeChildAppender, makeObjectPropertySetter,
   makeReplacer, makeSequence, makeSimpleNodeFactory, makeStructureNS,
   OBJECT_PROPERTY_NODE_FACTORY, parse, parseNode, pushParseAndPop,
-  pushSerializeAndPop, XML_SCHEMA_INSTANCE_URI} from '../xml.js';
+  pushSerializeAndPop, XML_SCHEMA_INSTANCE_URI
+} from '../xml.js';
 
 /**
  * @typedef {Object} Vec2
@@ -75,7 +77,7 @@ const NAMESPACE_URIS = [
  * @type {string}
  */
 const SCHEMA_LOCATION = 'http://www.opengis.net/kml/2.2 ' +
-    'https://developers.google.com/kml/schema/kml22gx.xsd';
+  'http://schemas.opengis.net/kml/2.3/ogckml23.xsd'; /* Support OGC KML 2.3 http://docs.opengeospatial.org/is/12-007r2/12-007r2.html */
 
 
 /**
@@ -325,7 +327,7 @@ function createStyleDefaults() {
   DEFAULT_IMAGE_STYLE_SIZE = [64, 64];
 
   DEFAULT_IMAGE_STYLE_SRC =
-      'https://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png';
+    'https://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png';
 
   DEFAULT_IMAGE_SCALE_MULTIPLIER = 0.5;
 
@@ -486,7 +488,7 @@ class KML extends XMLFeature {
    * @return {Feature|undefined} Feature.
    */
   readPlacemark_(node, objectStack) {
-    const object = pushParseAndPop({'geometry': null},
+    const object = pushParseAndPop({ 'geometry': null },
       PLACEMARK_PARSERS, node, objectStack);
     if (!object) {
       return undefined;
@@ -645,9 +647,9 @@ class KML extends XMLFeature {
       const doc = parse(source);
       return this.readNameFromDocument(doc);
     } else if (isDocument(source)) {
-      return this.readNameFromDocument(/** @type {Document} */ (source));
+      return this.readNameFromDocument(/** @type {Document} */(source));
     } else {
-      return this.readNameFromNode(/** @type {Element} */ (source));
+      return this.readNameFromNode(/** @type {Element} */(source));
     }
   }
 
@@ -658,7 +660,7 @@ class KML extends XMLFeature {
   readNameFromDocument(doc) {
     for (let n = /** @type {Node} */ (doc.firstChild); n; n = n.nextSibling) {
       if (n.nodeType == Node.ELEMENT_NODE) {
-        const name = this.readNameFromNode(/** @type {Element} */ (n));
+        const name = this.readNameFromNode(/** @type {Element} */(n));
         if (name) {
           return name;
         }
@@ -674,17 +676,17 @@ class KML extends XMLFeature {
   readNameFromNode(node) {
     for (let n = node.firstElementChild; n; n = n.nextElementSibling) {
       if (includes(NAMESPACE_URIS, n.namespaceURI) &&
-          n.localName == 'name') {
+        n.localName == 'name') {
         return readString(n);
       }
     }
     for (let n = node.firstElementChild; n; n = n.nextElementSibling) {
       const localName = n.localName;
       if (includes(NAMESPACE_URIS, n.namespaceURI) &&
-          (localName == 'Document' ||
-           localName == 'Folder' ||
-           localName == 'Placemark' ||
-           localName == 'kml')) {
+        (localName == 'Document' ||
+          localName == 'Folder' ||
+          localName == 'Placemark' ||
+          localName == 'kml')) {
         const name = this.readNameFromNode(n);
         if (name) {
           return name;
@@ -708,10 +710,10 @@ class KML extends XMLFeature {
       extend(networkLinks, this.readNetworkLinksFromDocument(doc));
     } else if (isDocument(source)) {
       extend(networkLinks, this.readNetworkLinksFromDocument(
-        /** @type {Document} */ (source)));
+        /** @type {Document} */(source)));
     } else {
       extend(networkLinks, this.readNetworkLinksFromNode(
-        /** @type {Element} */ (source)));
+        /** @type {Element} */(source)));
     }
     return networkLinks;
   }
@@ -724,7 +726,7 @@ class KML extends XMLFeature {
     const networkLinks = [];
     for (let n = /** @type {Node} */ (doc.firstChild); n; n = n.nextSibling) {
       if (n.nodeType == Node.ELEMENT_NODE) {
-        extend(networkLinks, this.readNetworkLinksFromNode(/** @type {Element} */ (n)));
+        extend(networkLinks, this.readNetworkLinksFromNode(/** @type {Element} */(n)));
       }
     }
     return networkLinks;
@@ -738,7 +740,7 @@ class KML extends XMLFeature {
     const networkLinks = [];
     for (let n = node.firstElementChild; n; n = n.nextElementSibling) {
       if (includes(NAMESPACE_URIS, n.namespaceURI) &&
-          n.localName == 'NetworkLink') {
+        n.localName == 'NetworkLink') {
         const obj = pushParseAndPop({}, NETWORK_LINK_PARSERS,
           n, []);
         networkLinks.push(obj);
@@ -747,9 +749,9 @@ class KML extends XMLFeature {
     for (let n = node.firstElementChild; n; n = n.nextElementSibling) {
       const localName = n.localName;
       if (includes(NAMESPACE_URIS, n.namespaceURI) &&
-          (localName == 'Document' ||
-           localName == 'Folder' ||
-           localName == 'kml')) {
+        (localName == 'Document' ||
+          localName == 'Folder' ||
+          localName == 'kml')) {
         extend(networkLinks, this.readNetworkLinksFromNode(n));
       }
     }
@@ -770,10 +772,10 @@ class KML extends XMLFeature {
       extend(regions, this.readRegionFromDocument(doc));
     } else if (isDocument(source)) {
       extend(regions, this.readRegionFromDocument(
-        /** @type {Document} */ (source)));
+        /** @type {Document} */(source)));
     } else {
       extend(regions, this.readRegionFromNode(
-        /** @type {Element} */ (source)));
+        /** @type {Element} */(source)));
     }
     return regions;
   }
@@ -786,7 +788,7 @@ class KML extends XMLFeature {
     const regions = [];
     for (let n = /** @type {Node} */ (doc.firstChild); n; n = n.nextSibling) {
       if (n.nodeType == Node.ELEMENT_NODE) {
-        extend(regions, this.readRegionFromNode(/** @type {Element} */ (n)));
+        extend(regions, this.readRegionFromNode(/** @type {Element} */(n)));
       }
     }
     return regions;
@@ -801,7 +803,7 @@ class KML extends XMLFeature {
     const regions = [];
     for (let n = node.firstElementChild; n; n = n.nextElementSibling) {
       if (includes(NAMESPACE_URIS, n.namespaceURI) &&
-          n.localName == 'Region') {
+        n.localName == 'Region') {
         const obj = pushParseAndPop({}, REGION_PARSERS,
           n, []);
         regions.push(obj);
@@ -810,9 +812,9 @@ class KML extends XMLFeature {
     for (let n = node.firstElementChild; n; n = n.nextElementSibling) {
       const localName = n.localName;
       if (includes(NAMESPACE_URIS, n.namespaceURI) &&
-          (localName == 'Document' ||
-           localName == 'Folder' ||
-           localName == 'kml')) {
+        (localName == 'Document' ||
+          localName == 'Folder' ||
+          localName == 'kml')) {
         extend(regions, this.readRegionFromNode(n));
       }
     }
@@ -837,7 +839,7 @@ class KML extends XMLFeature {
     kml.setAttributeNS(xmlnsUri, 'xmlns:xsi', XML_SCHEMA_INSTANCE_URI);
     kml.setAttributeNS(XML_SCHEMA_INSTANCE_URI, 'xsi:schemaLocation', SCHEMA_LOCATION);
 
-    const /** @type {import("../xml.js").NodeStackItem} */ context = {node: kml};
+    const /** @type {import("../xml.js").NodeStackItem} */ context = { node: kml };
     /** @type {!Object<string, (Array<Feature>|Feature|undefined)>} */
     const properties = {};
     if (features.length > 1) {
@@ -918,7 +920,7 @@ function createFeatureStyleFunction(style, styleUrl, defaultStyle, sharedStyles,
      * @param {number} resolution Resolution.
      * @return {Array<Style>} Style.
      */
-    function(feature, resolution) {
+    function (feature, resolution) {
       let drawName = showPointNames;
       /** @type {Style|undefined} */
       let nameStyle;
@@ -1018,7 +1020,7 @@ export function readFlatCoordinates(node) {
   // The KML specification states that coordinate tuples should not include
   // spaces, but we tolerate them.
   const re =
-      /^\s*([+\-]?\d*\.?\d+(?:e[+\-]?\d+)?)\s*,\s*([+\-]?\d*\.?\d+(?:e[+\-]?\d+)?)(?:\s*,\s*([+\-]?\d*\.?\d+(?:e[+\-]?\d+)?))?\s*/i;
+    /^\s*([+\-]?\d*\.?\d+(?:e[+\-]?\d+)?)\s*,\s*([+\-]?\d*\.?\d+(?:e[+\-]?\d+)?)(?:\s*,\s*([+\-]?\d*\.?\d+(?:e[+\-]?\d+)?))?\s*/i;
   let m;
   while ((m = re.exec(s))) {
     const x = parseFloat(m[1]);
@@ -1148,7 +1150,7 @@ function iconStyleParser(node, objectStack) {
   const drawIcon = (!('Icon' in object) || Object.keys(IconObject).length > 0);
   let src;
   const href = /** @type {string|undefined} */
-      (IconObject['href']);
+    (IconObject['href']);
   if (href) {
     src = href;
   } else if (drawIcon) {
@@ -1157,7 +1159,7 @@ function iconStyleParser(node, objectStack) {
   let anchor, anchorXUnits, anchorYUnits;
   let anchorOrigin = IconOrigin.BOTTOM_LEFT;
   const hotSpot = /** @type {Vec2|undefined} */
-      (object['hotSpot']);
+    (object['hotSpot']);
   if (hotSpot) {
     anchor = [hotSpot.x, hotSpot.y];
     anchorXUnits = hotSpot.xunits;
@@ -1175,31 +1177,31 @@ function iconStyleParser(node, objectStack) {
 
   let offset;
   const x = /** @type {number|undefined} */
-      (IconObject['x']);
+    (IconObject['x']);
   const y = /** @type {number|undefined} */
-      (IconObject['y']);
+    (IconObject['y']);
   if (x !== undefined && y !== undefined) {
     offset = [x, y];
   }
 
   let size;
   const w = /** @type {number|undefined} */
-      (IconObject['w']);
+    (IconObject['w']);
   const h = /** @type {number|undefined} */
-      (IconObject['h']);
+    (IconObject['h']);
   if (w !== undefined && h !== undefined) {
     size = [w, h];
   }
 
   let rotation;
   const heading = /** @type {number} */
-      (object['heading']);
+    (object['heading']);
   if (heading !== undefined) {
     rotation = toRadians(heading);
   }
 
   let scale = /** @type {number|undefined} */
-      (object['scale']);
+    (object['scale']);
 
   if (drawIcon) {
     if (src == DEFAULT_IMAGE_STYLE_SRC) {
@@ -1256,10 +1258,10 @@ function labelStyleParser(node, objectStack) {
   const textStyle = new Text({
     fill: new Fill({
       color: /** @type {import("../color.js").Color} */
-          ('color' in object ? object['color'] : DEFAULT_COLOR)
+        ('color' in object ? object['color'] : DEFAULT_COLOR)
     }),
     scale: /** @type {number|undefined} */
-        (object['scale'])
+      (object['scale'])
   });
   styleObject['textStyle'] = textStyle;
 }
@@ -1294,7 +1296,7 @@ function lineStyleParser(node, objectStack) {
   const styleObject = objectStack[objectStack.length - 1];
   const strokeStyle = new Stroke({
     color: /** @type {import("../color.js").Color} */
-        ('color' in object ? object['color'] : DEFAULT_COLOR),
+      ('color' in object ? object['color'] : DEFAULT_COLOR),
     width: /** @type {number} */ ('width' in object ? object['width'] : 1)
   });
   styleObject['strokeStyle'] = strokeStyle;
@@ -1327,7 +1329,7 @@ function polyStyleParser(node, objectStack) {
   const styleObject = objectStack[objectStack.length - 1];
   const fillStyle = new Fill({
     color: /** @type {import("../color.js").Color} */
-        ('color' in object ? object['color'] : DEFAULT_COLOR)
+      ('color' in object ? object['color'] : DEFAULT_COLOR)
   });
   styleObject['fillStyle'] = fillStyle;
   const fill = /** @type {boolean|undefined} */ (object['fill']);
@@ -1368,11 +1370,11 @@ function readFlatLinearRing(node, objectStack) {
  */
 function gxCoordParser(node, objectStack) {
   const gxTrackObject = /** @type {GxTrackObject} */
-      (objectStack[objectStack.length - 1]);
+    (objectStack[objectStack.length - 1]);
   const flatCoordinates = gxTrackObject.flatCoordinates;
   const s = getAllTextContent(node, false);
   const re =
-      /^\s*([+\-]?\d+(?:\.\d*)?(?:e[+\-]?\d*)?)\s+([+\-]?\d+(?:\.\d*)?(?:e[+\-]?\d*)?)\s+([+\-]?\d+(?:\.\d*)?(?:e[+\-]?\d*)?)\s*$/i;
+    /^\s*([+\-]?\d+(?:\.\d*)?(?:e[+\-]?\d*)?)\s+([+\-]?\d+(?:\.\d*)?(?:e[+\-]?\d*)?)\s+([+\-]?\d+(?:\.\d*)?(?:e[+\-]?\d*)?)\s*$/i;
   const m = re.exec(s);
   if (m) {
     const x = parseFloat(m[1]);
@@ -1430,7 +1432,7 @@ const GX_TRACK_PARSERS = makeStructureNS(
  */
 function readGxTrack(node, objectStack) {
   const gxTrackObject = pushParseAndPop(
-    /** @type {GxTrackObject} */ ({
+    /** @type {GxTrackObject} */({
       flatCoordinates: [],
       whens: []
     }), GX_TRACK_PARSERS, node, objectStack);
@@ -1521,7 +1523,7 @@ function readLineString(node, objectStack) {
     EXTRUDE_AND_ALTITUDE_MODE_PARSERS, node,
     objectStack);
   const flatCoordinates =
-      readFlatCoordinatesFromNode(node, objectStack);
+    readFlatCoordinatesFromNode(node, objectStack);
   if (flatCoordinates) {
     const lineString = new LineString(flatCoordinates, GeometryLayout.XYZ);
     lineString.setProperties(properties, true);
@@ -1542,7 +1544,7 @@ function readLinearRing(node, objectStack) {
     EXTRUDE_AND_ALTITUDE_MODE_PARSERS, node,
     objectStack);
   const flatCoordinates =
-      readFlatCoordinatesFromNode(node, objectStack);
+    readFlatCoordinatesFromNode(node, objectStack);
   if (flatCoordinates) {
     const polygon = new Polygon(flatCoordinates, GeometryLayout.XYZ, [flatCoordinates.length]);
     polygon.setProperties(properties, true);
@@ -1635,7 +1637,7 @@ function readPoint(node, objectStack) {
     EXTRUDE_AND_ALTITUDE_MODE_PARSERS, node,
     objectStack);
   const flatCoordinates =
-      readFlatCoordinatesFromNode(node, objectStack);
+    readFlatCoordinatesFromNode(node, objectStack);
   if (flatCoordinates) {
     const point = new Point(flatCoordinates, GeometryLayout.XYZ);
     point.setProperties(properties, true);
@@ -1663,7 +1665,7 @@ const FLAT_LINEAR_RINGS_PARSERS = makeStructureNS(
  * @return {Polygon|undefined} Polygon.
  */
 function readPolygon(node, objectStack) {
-  const properties = pushParseAndPop(/** @type {Object<string,*>} */ ({}),
+  const properties = pushParseAndPop(/** @type {Object<string,*>} */({}),
     EXTRUDE_AND_ALTITUDE_MODE_PARSERS, node,
     objectStack);
   const flatLinearRings = pushParseAndPop([null],
@@ -1709,8 +1711,8 @@ function readStyle(node, objectStack) {
     return null;
   }
   let fillStyle = /** @type {Fill} */
-      ('fillStyle' in styleObject ?
-        styleObject['fillStyle'] : DEFAULT_FILL_STYLE);
+    ('fillStyle' in styleObject ?
+      styleObject['fillStyle'] : DEFAULT_FILL_STYLE);
   const fill = /** @type {boolean|undefined} */ (styleObject['fill']);
   if (fill !== undefined && !fill) {
     fillStyle = null;
@@ -1724,13 +1726,13 @@ function readStyle(node, objectStack) {
     imageStyle = DEFAULT_IMAGE_STYLE;
   }
   const textStyle = /** @type {Text} */
-      ('textStyle' in styleObject ?
-        styleObject['textStyle'] : DEFAULT_TEXT_STYLE);
+    ('textStyle' in styleObject ?
+      styleObject['textStyle'] : DEFAULT_TEXT_STYLE);
   let strokeStyle = /** @type {Stroke} */
-      ('strokeStyle' in styleObject ?
-        styleObject['strokeStyle'] : DEFAULT_STROKE_STYLE);
+    ('strokeStyle' in styleObject ?
+      styleObject['strokeStyle'] : DEFAULT_STROKE_STYLE);
   const outline = /** @type {boolean|undefined} */
-      (styleObject['outline']);
+    (styleObject['outline']);
   if (outline !== undefined && !outline) {
     strokeStyle = null;
   }
@@ -1856,15 +1858,15 @@ function pairDataParser(node, objectStack) {
     return;
   }
   const key = /** @type {string|undefined} */
-      (pairObject['key']);
+    (pairObject['key']);
   if (key && key == 'normal') {
     const styleUrl = /** @type {string|undefined} */
-        (pairObject['styleUrl']);
+      (pairObject['styleUrl']);
     if (styleUrl) {
       objectStack[objectStack.length - 1] = styleUrl;
     }
     const style = /** @type {Style} */
-        (pairObject['Style']);
+      (pairObject['Style']);
     if (style) {
       objectStack[objectStack.length - 1] = style;
     }
@@ -2014,7 +2016,7 @@ function innerBoundaryIsParser(node, objectStack) {
     INNER_BOUNDARY_IS_PARSERS, node, objectStack);
   if (flatLinearRing) {
     const flatLinearRings = /** @type {Array<Array<number>>} */
-        (objectStack[objectStack.length - 1]);
+      (objectStack[objectStack.length - 1]);
     flatLinearRings.push(flatLinearRing);
   }
 }
@@ -2040,7 +2042,7 @@ function outerBoundaryIsParser(node, objectStack) {
     OUTER_BOUNDARY_IS_PARSERS, node, objectStack);
   if (flatLinearRing) {
     const flatLinearRings = /** @type {Array<Array<number>>} */
-        (objectStack[objectStack.length - 1]);
+      (objectStack[objectStack.length - 1]);
     flatLinearRings[0] = flatLinearRing;
   }
 }
@@ -2061,7 +2063,7 @@ function linkParser(node, objectStack) {
  */
 function whenParser(node, objectStack) {
   const gxTrackObject = /** @type {GxTrackObject} */
-      (objectStack[objectStack.length - 1]);
+    (objectStack[objectStack.length - 1]);
   const whens = gxTrackObject.whens;
   const s = getAllTextContent(node, false);
   const when = Date.parse(s);
@@ -2079,7 +2081,7 @@ function writeColorTextNode(node, color) {
   /** @type {Array<string|number>} */
   const abgr = [opacity * 255, rgba[2], rgba[1], rgba[0]];
   for (let i = 0; i < 4; ++i) {
-    const hex = Math.floor(/** @type {number} */ (abgr[i])).toString(16);
+    const hex = Math.floor(/** @type {number} */(abgr[i])).toString(16);
     abgr[i] = (hex.length == 1) ? '0' + hex : hex;
   }
   writeStringTextNode(node, abgr.join(''));
@@ -2099,10 +2101,10 @@ function writeCoordinatesTextNode(node, coordinates, objectStack) {
 
   let dimension;
   if (layout == GeometryLayout.XY ||
-      layout == GeometryLayout.XYM) {
+    layout == GeometryLayout.XYM) {
     dimension = 2;
   } else if (layout == GeometryLayout.XYZ ||
-      layout == GeometryLayout.XYZM) {
+    layout == GeometryLayout.XYZM) {
     dimension = 3;
   } else {
     assert(false, 34); // Invalid geometry layout
@@ -2145,7 +2147,7 @@ const EXTENDEDDATA_NODE_SERIALIZERS = makeStructureNS(
  */
 function writeDataNode(node, pair, objectStack) {
   node.setAttribute('name', pair.name);
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const value = pair.value;
 
   if (typeof value == 'object') {
@@ -2200,7 +2202,7 @@ const DOCUMENT_SERIALIZERS = makeStructureNS(
  * @param {string=} opt_nodeName Node name.
  * @return {Node|undefined} Node.
  */
-const DOCUMENT_NODE_FACTORY = function(value, objectStack, opt_nodeName) {
+const DOCUMENT_NODE_FACTORY = function (value, objectStack, opt_nodeName) {
   const parentNode = objectStack[objectStack.length - 1].node;
   return createElementNS(parentNode.namespaceURI, 'Placemark');
 };
@@ -2213,7 +2215,7 @@ const DOCUMENT_NODE_FACTORY = function(value, objectStack, opt_nodeName) {
  * @this {KML}
  */
 function writeDocument(node, features, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   pushSerializeAndPop(context, DOCUMENT_SERIALIZERS,
     DOCUMENT_NODE_FACTORY, features, objectStack, undefined,
     this);
@@ -2234,14 +2236,14 @@ const DATA_NODE_FACTORY = makeSimpleNodeFactory('Data');
  * @param {Array<*>} objectStack Object stack.
  */
 function writeExtendedData(node, namesAndValues, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const names = namesAndValues.names;
   const values = namesAndValues.values;
   const length = names.length;
 
   for (let i = 0; i < length; i++) {
     pushSerializeAndPop(context, EXTENDEDDATA_NODE_SERIALIZERS,
-      DATA_NODE_FACTORY, [{name: names[i], value: values[i]}], objectStack);
+      DATA_NODE_FACTORY, [{ name: names[i], value: values[i] }], objectStack);
   }
 }
 
@@ -2282,7 +2284,7 @@ const ICON_SERIALIZERS = makeStructureNS(
  * @param {string=} opt_nodeName Node name.
  * @return {Node|undefined} Node.
  */
-const GX_NODE_FACTORY = function(value, objectStack, opt_nodeName) {
+const GX_NODE_FACTORY = function (value, objectStack, opt_nodeName) {
   return createElementNS(GX_NAMESPACE_URIS[0],
     'gx:' + opt_nodeName);
 };
@@ -2294,7 +2296,7 @@ const GX_NODE_FACTORY = function(value, objectStack, opt_nodeName) {
  * @param {Array<*>} objectStack Object stack.
  */
 function writeIcon(node, icon, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const parentNode = objectStack[objectStack.length - 1].node;
   let orderedKeys = ICON_SEQUENCE[parentNode.namespaceURI];
   let values = makeSequence(icon, orderedKeys);
@@ -2302,7 +2304,7 @@ function writeIcon(node, icon, objectStack) {
     ICON_SERIALIZERS, OBJECT_PROPERTY_NODE_FACTORY,
     values, objectStack, orderedKeys);
   orderedKeys =
-      ICON_SEQUENCE[GX_NAMESPACE_URIS[0]];
+    ICON_SEQUENCE[GX_NAMESPACE_URIS[0]];
   values = makeSequence(icon, orderedKeys);
   pushSerializeAndPop(context, ICON_SERIALIZERS,
     GX_NODE_FACTORY, values, objectStack, orderedKeys);
@@ -2338,7 +2340,7 @@ const ICON_STYLE_SERIALIZERS = makeStructureNS(
  * @param {Array<*>} objectStack Object stack.
  */
 function writeIconStyle(node, style, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const properties = {};
   const src = style.getSrc();
   const size = style.getSize();
@@ -2416,7 +2418,7 @@ const LABEL_STYLE_SERIALIZERS = makeStructureNS(
  * @param {Array<*>} objectStack Object stack.
  */
 function writeLabelStyle(node, style, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const properties = {};
   const fill = style.getFill();
   if (fill) {
@@ -2428,7 +2430,7 @@ function writeLabelStyle(node, style, objectStack) {
   }
   const parentNode = objectStack[objectStack.length - 1].node;
   const orderedKeys =
-      LABEL_STYLE_SEQUENCE[parentNode.namespaceURI];
+    LABEL_STYLE_SEQUENCE[parentNode.namespaceURI];
   const values = makeSequence(properties, orderedKeys);
   pushSerializeAndPop(context, LABEL_STYLE_SERIALIZERS,
     OBJECT_PROPERTY_NODE_FACTORY, values, objectStack, orderedKeys);
@@ -2462,7 +2464,7 @@ const LINE_STYLE_SERIALIZERS = makeStructureNS(
  * @param {Array<*>} objectStack Object stack.
  */
 function writeLineStyle(node, style, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const properties = {
     'color': style.getColor(),
     'width': style.getWidth()
@@ -2498,7 +2500,7 @@ const GEOMETRY_TYPE_TO_NODENAME = {
  * @param {string=} opt_nodeName Node name.
  * @return {Node|undefined} Node.
  */
-const GEOMETRY_NODE_FACTORY = function(value, objectStack, opt_nodeName) {
+const GEOMETRY_NODE_FACTORY = function (value, objectStack, opt_nodeName) {
   if (value) {
     const parentNode = objectStack[objectStack.length - 1].node;
     return createElementNS(parentNode.namespaceURI,
@@ -2562,7 +2564,7 @@ const MULTI_GEOMETRY_SERIALIZERS = makeStructureNS(
  */
 function writeMultiGeometry(node, geometry, objectStack) {
   /** @type {import("../xml.js").NodeStackItem} */
-  const context = {node: node};
+  const context = { node: node };
   const type = geometry.getType();
   /** @type {Array<import("../geom/Geometry.js").default>} */
   let geometries;
@@ -2576,11 +2578,11 @@ function writeMultiGeometry(node, geometry, objectStack) {
     factory = POINT_NODE_FACTORY;
   } else if (type == GeometryType.MULTI_LINE_STRING) {
     geometries =
-        (/** @type {MultiLineString} */ (geometry)).getLineStrings();
+      (/** @type {MultiLineString} */ (geometry)).getLineStrings();
     factory = LINE_STRING_NODE_FACTORY;
   } else if (type == GeometryType.MULTI_POLYGON) {
     geometries =
-        (/** @type {MultiPolygon} */ (geometry)).getPolygons();
+      (/** @type {MultiPolygon} */ (geometry)).getPolygons();
     factory = POLYGON_NODE_FACTORY;
   } else {
     assert(false, 39); // Unknown geometry type
@@ -2608,7 +2610,7 @@ const BOUNDARY_IS_SERIALIZERS = makeStructureNS(
  * @param {Array<*>} objectStack Object stack.
  */
 function writeBoundaryIs(node, linearRing, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   pushSerializeAndPop(context,
     BOUNDARY_IS_SERIALIZERS,
     LINEAR_RING_NODE_FACTORY, [linearRing], objectStack);
@@ -2666,27 +2668,29 @@ const EXTENDEDDATA_NODE_FACTORY = makeSimpleNodeFactory('ExtendedData');
  * @this {KML}
  */
 function writePlacemark(node, feature, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
 
   // set id
   if (feature.getId()) {
-    node.setAttribute('id', /** @type {string} */ (feature.getId()));
+    node.setAttribute('id', /** @type {string} */(feature.getId()));
   }
 
   // serialize properties (properties unknown to KML are not serialized)
   const properties = feature.getProperties();
 
   // don't export these to ExtendedData
-  const filter = {'address': 1, 'description': 1, 'name': 1, 'open': 1,
-    'phoneNumber': 1, 'styleUrl': 1, 'visibility': 1};
+  const filter = {
+    'address': 1, 'description': 1, 'name': 1, 'open': 1,
+    'phoneNumber': 1, 'styleUrl': 1, 'visibility': 1
+  };
   filter[feature.getGeometryName()] = 1;
-  const keys = Object.keys(properties || {}).sort().filter(function(v) {
+  const keys = Object.keys(properties || {}).sort().filter(function (v) {
     return !filter[v];
   });
 
   if (keys.length > 0) {
     const sequence = makeSequence(properties, keys);
-    const namesAndValues = {names: keys, values: sequence};
+    const namesAndValues = { names: keys, values: sequence };
     pushSerializeAndPop(context, PLACEMARK_SERIALIZERS,
       EXTENDEDDATA_NODE_FACTORY, [namesAndValues], objectStack);
   }
@@ -2754,7 +2758,7 @@ const PRIMITIVE_GEOMETRY_SERIALIZERS = makeStructureNS(
  */
 function writePrimitiveGeometry(node, geometry, objectStack) {
   const flatCoordinates = geometry.getFlatCoordinates();
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   context['layout'] = geometry.getLayout();
   context['stride'] = geometry.getStride();
 
@@ -2807,7 +2811,7 @@ const OUTER_BOUNDARY_NODE_FACTORY = makeSimpleNodeFactory('outerBoundaryIs');
 function writePolygon(node, polygon, objectStack) {
   const linearRings = polygon.getLinearRings();
   const outerRing = linearRings.shift();
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   // inner rings
   pushSerializeAndPop(context,
     POLYGON_SERIALIZERS,
@@ -2845,7 +2849,7 @@ const COLOR_NODE_FACTORY = makeSimpleNodeFactory('color');
  * @param {Array<*>} objectStack Object stack.
  */
 function writePolyStyle(node, style, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   pushSerializeAndPop(context, POLY_STYLE_SERIALIZERS,
     COLOR_NODE_FACTORY, [style.getColor()], objectStack);
 }
@@ -2891,7 +2895,7 @@ const STYLE_SERIALIZERS = makeStructureNS(
  * @param {Array<*>} objectStack Object stack.
  */
 function writeStyle(node, style, objectStack) {
-  const /** @type {import("../xml.js").NodeStackItem} */ context = {node: node};
+  const /** @type {import("../xml.js").NodeStackItem} */ context = { node: node };
   const properties = {};
   const fillStyle = style.getFill();
   const strokeStyle = style.getStroke();
