@@ -68,7 +68,8 @@ const NAMESPACE_URIS = [
   'http://earth.google.com/kml/2.0',
   'http://earth.google.com/kml/2.1',
   'http://earth.google.com/kml/2.2',
-  'http://www.opengis.net/kml/2.2'
+  'http://www.opengis.net/kml/2.2',
+  'http://www.openlayers.org'     // For KML2.3 dialect data
 ];
 
 
@@ -1274,7 +1275,8 @@ function labelStyleParser(node, objectStack) {
 const LINE_STYLE_PARSERS = makeStructureNS(
   NAMESPACE_URIS, {
     'color': makeObjectPropertySetter(readColor),
-    'width': makeObjectPropertySetter(readDecimal)
+    'width': makeObjectPropertySetter(readDecimal),
+    'lineDash': makeObjectPropertySetter(readString) //FIXME May be read from se:LineSymbolizer http://www.opengis.net/se
   });
 
 
@@ -1298,6 +1300,7 @@ function lineStyleParser(node, objectStack) {
     color: /** @type {import("../color.js").Color} */
       ('color' in object ? object['color'] : DEFAULT_COLOR),
     width: /** @type {number} */ ('width' in object ? object['width'] : 1)
+    , lineDash: ('lineDash' in object ? object['lineDash'].toString().split(',') : []) /* Dash array supports */
   });
   styleObject['strokeStyle'] = strokeStyle;
 }
