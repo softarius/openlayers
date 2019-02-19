@@ -943,6 +943,72 @@ function createFeatureStyleFunction(style, styleUrl, defaultStyle, sharedStyles,
           nameStyle = createNameStyleFunction(style[0], name);
           return style.concat(nameStyle);
         }
+
+        var geometry = feature.getGeometry();
+        if (geometry.getType() == 'Polygon' && style[0].getImage().getSrc() != DEFAULT_IMAGE_STYLE_SRC
+
+        ) {
+          let coordinates = geometry.getCoordinates();
+          geometry = new LineString(coordinates[0]);
+        }
+
+        if (geometry.getType() == 'LineString') {
+
+          var icon0 = style[0].getImage();
+          let styles = [style[0]];
+          var rotation = 0;
+          var prevdir = 777;
+          var i = 0;
+          console.log(geometry.flatCoordinates.length);
+          geometry.forEachSegment(function (start, end) {
+            if (style[0].getImage().getSrc().indexOf('rotate') != -1) { // can be rotated?
+              var dx = end[0] - start[0];
+              var dy = end[1] - start[1];
+              var dir = Math.PI / 2 - Math.atan2(dy, dx);
+
+              if (dir < 0) { dir = dir + Math.PI * 2 }
+              if (prevdir == 777) { prevdir = dir }
+              i++;
+
+
+              rotation = (dir + prevdir) / 2 + Math.PI / 2;
+              //if (rotation < 0) { rotation = rotation + Math.PI * 2 }
+              // console.log('узел ', i, dx, dy, dir, prevdir, rotation);
+            }
+
+            if (icon0.getSrc() != DEFAULT_IMAGE_STYLE_SRC) {
+              // vertex arrows etc 
+              let rotUrl = icon0.getSrc();
+
+              styles.push(new Style({
+                geometry: new Point(start),
+                image: new Icon({
+                  src: rotUrl,
+                  anchor: [0.5, 0.5],
+                  rotateWithView: true,
+                  rotation: rotation
+                })
+              }));
+              // console.log(i, geometry.flatCoordinates.length / 3);
+              if (i + 1 == geometry.flatCoordinates.length / 3) {
+                styles.push(new Style({
+                  geometry: new Point(end),
+                  image: new Icon({
+                    src: rotUrl,
+                    anchor: [0.5, 0.5],
+                    rotateWithView: true,
+                    rotation: dir + Math.PI / 2
+                  })
+                }));
+              }
+
+            }
+            prevdir = dir;
+          }); // foreach
+
+          return styles;
+        }
+
         return style;
       }
       if (styleUrl) {
